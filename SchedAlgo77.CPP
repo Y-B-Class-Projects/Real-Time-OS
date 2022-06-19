@@ -48,3 +48,28 @@ int earliesDeadlineFirst()
 
 	return nextTask;
 }
+
+int rateMonotonicScheduling()
+{
+	int nextTask = -1;
+	int min = 999;
+
+	for (int i = 0; i < SMARTS.getTotalTasks(); i++)
+	{
+		if (SMARTS.getStatus(i) == READY && SMARTS.getCycles(i) > 0)
+		{
+			int taskPeriod = SMARTS.getPeriodTime(i);
+
+			if (taskPeriod < min)
+			{
+				min = taskPeriod;
+				nextTask = i;
+			}
+		}
+	}
+
+	if (nextTask < 0)	// no found READY task to run
+		nextTask = SMARTS.getTotalTasks();	// call main next time.
+
+	return nextTask;
+}

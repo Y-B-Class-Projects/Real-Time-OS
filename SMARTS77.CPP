@@ -42,17 +42,17 @@ void Parallelism::externalFunctions(void interrupt ( *timerInterruptHandler)(...
 	this->scheduler = scheduler;
 	this->userTaskEnd = userTaskEnd;
 	this->algorithm = algorithm;
-	contextSched.declare(scheduler, userTaskEnd, 'S', 0, 0); // prepare the stack of the scheduler task
+	contextSched.declare(scheduler, userTaskEnd, 'S', 0, 0, 0); // prepare the stack of the scheduler task
 	for (int i=MaxStack-1; i >= (MaxStack-14); i--)
 		schedCopy[i]=contextSched.stack[i];
 }
 
-int Parallelism::declareTask(void far *code, char name, int periodTime, int cycles)
+int Parallelism::declareTask(void far *code, char name, int periodTime, int cycles, int priority)
 		// Insert a new task entry in SMARTS context array [ ]
 {
 	if (totalTasks < MaxTask-1) 
 	{
-		context[totalTasks++].declare(code, userTaskEnd, name, periodTime, cycles);
+		context[totalTasks++].declare(code, userTaskEnd, name, periodTime, cycles, priority);
 		++activeTasks;
 		return true;
 	}
@@ -240,6 +240,12 @@ char Parallelism::getCurrentName( )
 	return context[currentTask].name;
 }
 
+int Parallelism::getCurrentPriority()
+{
+	return context[currentTask].currentPriority;
+}
+
+
 taskStatus Parallelism::getStatus(int taskNum)  	
 	// returns status or undefined if not found
 {
@@ -412,7 +418,7 @@ Task::Task()
 	currentPriority=priority=0;
 }
 //-----------------------------------------------------
-void Task::declare(void far *code, void far *userTaskEnd, char name, int periodTime, int cycles)
+void Task::declare(void far *code, void far *userTaskEnd, char name, int periodTime, int cycles, int priority)
 {
 	stack[MaxStack-5]=FP_OFF(code);
 	stack[MaxStack-4]=FP_SEG(code);
@@ -433,6 +439,9 @@ void Task::declare(void far *code, void far *userTaskEnd, char name, int periodT
 	this->name= name;
 
 	periodTimeLast = this->periodTime;
+
+	currentPriority = priority;
+	this->priority = priority;
 
 	status = READY;
 }
@@ -468,20 +477,100 @@ void Task::reDeclareTask()
 	{
 		if (cycles > 0)
 		{
-			//SMARTS.contextSwitchOff();
+			//MUTEX.acquire();MUTEX.acquire();
 			status = READY;
 			is_restore = 1;
-			//SMARTS.contextSwitchOn();
+			//MUTEX.release();
 		}
 		else
 			status = NOT_ACTIVE;
 	}
 	else
 	{
-		SMARTS.contextSwitchOff();
+		MUTEX.acquire();
 		cprintf("Time error %c ", name);
 		status = UNDEFINED;
 		SMARTS.timeOutTasks++;
-		SMARTS.contextSwitchOn();
+		MUTEX.release();
 	}
+}
+
+void Mutex::Mutex()
+{
+	_owner = -1;
+	_level = 0;
+	_s = 1;
+	_waitingList = new priorityQueue();
+	_numberSuspended = 0;
+}
+
+
+void Mutex::acquire()
+{
+	if (_s == 1 || _owner == SMARTS.getCurrentTask())
+		_s = 0;
+	else
+	{
+		_numberSuspended++;
+		_waitingList->enqueue(SMARTS.getCurrentTask(), SMARTS.getCurrentPriority());
+		SMARTS.suspended();		// suspending the current task.
+	}
+	_owner = SMARTS.getCurrentTask();
+	_level++;
+}
+
+void Mutex::release()
+{
+	if (_owner == SMARTS.getCurrentTask())
+		if (--_level)
+			return;
+		else {
+			_owner = -1;
+			if (_numberSuspended > 0) {
+				_numberSuspended--;
+				int task = _waitingList->peek();
+				cprintf("(%d)", task);
+				SMARTS.resume(task);
+			}
+			else
+				_s = 1;
+		}
+}
+
+priorityQueue::priorityQueue()
+{
+	size = 0;
+}
+
+void priorityQueue::enqueue(int value, int priority)
+{
+	pr[size].value = value;
+	pr[size].priority = priority;
+
+	size++;
+}
+
+int priorityQueue::peek()
+{
+	int highestPriority = -999;
+	int ind = -1;
+
+	for (int i = 0; i < size; i++) 
+	{
+		if (highestPriority < pr[i].priority) 
+		{
+			highestPriority = pr[i].priority;
+			ind = i;
+		}
+	}
+
+	cprintf("(i:%d, v:%d, s:%d)", ind, pr[ind].value, size-1);
+	int ret = pr[ind].value;
+	
+	for (i = ind; i < size; i++) 
+		pr[i] = pr[i + 1];
+
+	size--;
+
+	return ret;
 }

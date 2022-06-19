@@ -9,6 +9,7 @@
 
 /**********    GLOBAL Variables    **********/
 Parallelism SMARTS;
+Mutex MUTEX;
 static unsigned StackSegAct, StackPtrAct;
 
 /**********    EXTERNAL FUNCTION     **********/

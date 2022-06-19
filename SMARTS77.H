@@ -12,7 +12,6 @@
 #include <values.h>
 #include <iostream.h>
 
-
 /**********    Constants    **********/
 #define true 1
 #define false 0
@@ -20,9 +19,42 @@
 #define userInt 0x60
 #define MaxTask 15
 #define MaxStack 512
+#define MaxWaiting 32
 enum taskStatus {READY, NOT_ACTIVE, SUSPENDED, SLEEP, UNDEFINED};
 
 /**********    Classes    **********/
+struct item {
+	int value;
+	int priority;
+};
+
+class priorityQueue
+{
+private:
+	item pr[MaxWaiting];
+	int size;
+
+public:
+	priorityQueue();
+	void enqueue(int value, int priority);
+	int peek();
+};
+
+class Mutex
+{
+private:
+	int _owner;
+	int _s;
+	int _numberSuspended;
+	priorityQueue *_waitingList;
+	int _level;
+
+public:
+	Mutex();
+	void acquire();
+	void release();
+};
+
 class Event
 {
 private:
@@ -60,7 +92,7 @@ public:
 	Event *expectedEvent;           // the event that this task is waiting for
 	int sleepCount;                 // the sleep remainder time
 	Task();
-	void declare(void far *code, void far *taskEnd, char name, int periodTime, int cycles);
+	void declare(void far *code, void far *taskEnd, char name, int periodTime, int cycles, int priority);
 	void sleepDecr();
 	void incrPriority();
 	void setOriginalPriority();
@@ -103,7 +135,7 @@ public:
 	void externalFunctions(void interrupt ( *timerInterruptHandler)(...),
 				   void far *scheduler, void far *userTaskEnd,
 				   int far (*algorithm)());
-	int declareTask(void far *code, char name, int periodTime, int cycles); // inserts a new task entry
+	int declareTask(void far *code, char name, int periodTime, int cycles, int priority); // inserts a new task entry
 	void runTheTasks();// start running the tasks
 	void callScheduler();          // return to the control to the scheduler
 	void restoreSchedStack();       // restore the 'scheduler' stack
@@ -121,6 +153,7 @@ public:
 	void setEndOfTimeSlice();       // set the 'end of time slice' flag
 	char getName(int taskNum);
 	char getCurrentName();
+	int getCurrentPriority();
 	taskStatus getStatus(int taskNum);
 	taskStatus getCurrentStatus();
 	void resume(int taskNum);
@@ -157,7 +190,8 @@ void myTaskEnd();
 	// 'short term' scheduler algorithms 
 int roundRobin();
 int earliesDeadlineFirst();
+int rateMonotonicScheduling();
 	// main scheduler object
 extern Parallelism SMARTS;
-
+extern Mutex MUTEX;
 

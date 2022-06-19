@@ -10,62 +10,90 @@
 // user Functions
 void a( )
 {
-	SMARTS.contextSwitchOff();
+	MUTEX.acquire();
 	cout << "\n *************   A Start    *********************";
-	SMARTS.contextSwitchOn();
+	MUTEX.release();
 	for (int j=0; j < 3; j++)
 	{
 		for (long i=0; i <600000; i++);
-		SMARTS.contextSwitchOff();
+		MUTEX.acquire();
 		cout << "A";
-		SMARTS.contextSwitchOn();
+		MUTEX.release();
 	}
-	SMARTS.contextSwitchOff();
+	MUTEX.acquire();
 	cout << "\n *************   A Finish   *********************";
-	SMARTS.contextSwitchOn();
+	MUTEX.release();
 }
 
 void b( )
 {
-	SMARTS.contextSwitchOff();
+	MUTEX.acquire();
 	cout << "\n *************   B Start    *********************";
-	SMARTS.contextSwitchOn();
+	MUTEX.release();
 	for (int j=0; j < 2; j++)
 	{
 		for (long i=0; i < 600000; i++);
-		SMARTS.contextSwitchOff();
+		MUTEX.acquire();
 		cout << "B";
-		SMARTS.contextSwitchOn();
+		MUTEX.release();
 	}
-	SMARTS.contextSwitchOff();
+	MUTEX.acquire();
 	cout << "\n *************   B Finish   *********************";
-	SMARTS.contextSwitchOn();
+	MUTEX.release();
 }
 
 void c( )
 {
-	SMARTS.contextSwitchOff();
+	MUTEX.acquire();
 	cout << "\n *************   C Start    *********************";
-	SMARTS.contextSwitchOn();
+	MUTEX.release();
 	for (int j=0; j <10; j++)
 	{
 		for (long i=0; i < 600000; i++);
-		SMARTS.contextSwitchOff();
+		MUTEX.acquire();
 		cout << "C";
-		SMARTS.contextSwitchOn();
+		MUTEX.release();
 	}
-	SMARTS.contextSwitchOff();
+	MUTEX.acquire();
 	cout << "\n *************   C Finish   *********************";
-	SMARTS.contextSwitchOn();
+	MUTEX.release();
 }
+
+void a1()
+{
+	MUTEX.acquire();
+	for (long i = 0; i < 6000000; i++);
+	cout << "\n *************   A1    *********************";
+	MUTEX.release();
+}
+void a2()
+{
+	MUTEX.acquire();
+	cout << "\n *************   A2    *********************";
+	MUTEX.release();
+}
+void a3()
+{
+	MUTEX.acquire();
+	cout << "\n *************   A3    *********************";
+	MUTEX.release();
+}
+
+
 
 void main( )
 {
 	clrscr();
-	SMARTS.externalFunctions(timerInterruptHandler, scheduler, myTaskEnd, earliesDeadlineFirst);
-	SMARTS.declareTask(a,'A', 50, 3);
-	SMARTS.declareTask(b,'B', 60, 2);
-	SMARTS.declareTask(c,'C', 100, 1);
+	SMARTS.externalFunctions(timerInterruptHandler, scheduler, myTaskEnd, roundRobin);
+	SMARTS.declareTask(a,'A', 51, 3, 30);
+	SMARTS.declareTask(b,'B', 50, 2, 20);
+	SMARTS.declareTask(c,'C', 49, 1, 10);
+	//SMARTS.declareTask(a3, 'c', 102, 1, 3);
+	//SMARTS.declareTask(a1, 'a', 100, 1, 1);
+	//SMARTS.declareTask(a2, 'b', 101, 1, 2);
+
+
+
 	SMARTS.runTheTasks();
 
 	char a;
