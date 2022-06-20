@@ -10,100 +10,64 @@
 // user Functions
 void a( )
 {
-	MUTEX.acquire();
+	SMARTS.contextSwitchOff();
 	cout << "\n *************   A Start    *********************";
-	MUTEX.release();
-	for (int j=0; j < 3; j++)
+	SMARTS.contextSwitchOn();
+	for (int j=0; j <500; j++)
 	{
 		for (long i=0; i <600000; i++);
-		MUTEX.acquire();
+		SMARTS.contextSwitchOff();
 		cout << "A";
-		MUTEX.release();
+		SMARTS.contextSwitchOn();
 	}
-	MUTEX.acquire();
+	SMARTS.contextSwitchOff();
 	cout << "\n *************   A Finish   *********************";
-	MUTEX.release();
+	SMARTS.contextSwitchOn();
 }
 
 void b( )
 {
-	MUTEX.acquire();
+	SMARTS.contextSwitchOff();
 	cout << "\n *************   B Start    *********************";
-	MUTEX.release();
-	for (int j=0; j < 2; j++)
+	SMARTS.contextSwitchOn();
+	for (int j=0; j <500; j++)
 	{
 		for (long i=0; i < 600000; i++);
-		MUTEX.acquire();
+		SMARTS.contextSwitchOff();
 		cout << "B";
-		MUTEX.release();
+		SMARTS.contextSwitchOn();
 	}
-	MUTEX.acquire();
+	SMARTS.contextSwitchOff();
 	cout << "\n *************   B Finish   *********************";
-	MUTEX.release();
+	SMARTS.contextSwitchOn();
 }
 
 void c( )
 {
-	MUTEX.acquire();
+	SMARTS.contextSwitchOff();
 	cout << "\n *************   C Start    *********************";
-	MUTEX.release();
-	for (int j=0; j <10; j++)
+	SMARTS.contextSwitchOn();
+	for (int j=0; j <500; j++)
 	{
 		for (long i=0; i < 600000; i++);
-		MUTEX.acquire();
+		SMARTS.contextSwitchOff();
 		cout << "C";
-		MUTEX.release();
+		SMARTS.contextSwitchOn();
 	}
-	MUTEX.acquire();
+	SMARTS.contextSwitchOff();
 	cout << "\n *************   C Finish   *********************";
-	MUTEX.release();
+	SMARTS.contextSwitchOn();
 }
-
-void a1()
-{
-	MUTEX.acquire();
-	//SMARTS.contextSwitchOff();
-	cout << "\n A";
-	for (long i = 0; i < 6000000; i++);
-	cout << "\n *************   A1    *********************";
-	MUTEX.release();
-	//SMARTS.contextSwitchOn();
-}
-void a2()
-{
-	MUTEX.acquire();
-	//SMARTS.contextSwitchOff();;
-	cout << "\n *************   A2    *********************";
-	MUTEX.release();
-	//SMARTS.contextSwitchOn();
-}
-void a3()
-{
-	MUTEX.acquire();
-	//SMARTS.contextSwitchOff();
-	cout << "\n *************   A3    *********************";
-	MUTEX.release();
-	//SMARTS.contextSwitchOn();
-}
-
-
 
 void main( )
 {
 	clrscr();
 	SMARTS.externalFunctions(timerInterruptHandler, scheduler, myTaskEnd, roundRobin);
-	//SMARTS.declareTask(a,'A', 51, 3, 30);
-	//SMARTS.declareTask(b,'B', 50, 2, 20);
-	//SMARTS.declareTask(c,'C', 49, 1, 10);
-	SMARTS.declareTask(a3, 'c', 102, 2, 3);
-	SMARTS.declareTask(a1, 'a', 100, 2, 1);
-	SMARTS.declareTask(a2, 'b', 101, 2, 2);
-
-
-
+	SMARTS.declareTask(a,'A');
+	SMARTS.declareTask(b,'B');
+	SMARTS.declareTask(c,'C');
 	SMARTS.runTheTasks();
-
-	char a;
-	cin >> a;
 }
+
+
 

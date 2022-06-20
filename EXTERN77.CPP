@@ -9,7 +9,6 @@
 
 /**********    GLOBAL Variables    **********/
 Parallelism SMARTS;
-Mutex MUTEX;
 static unsigned StackSegAct, StackPtrAct;
 
 /**********    EXTERNAL FUNCTION     **********/
@@ -27,7 +26,6 @@ void far interrupt timerInterruptHandler(...)
 	if (!SMARTS.getProgInt( ))
 	{
 		asm	int userInt;
-		SMARTS.handleClockPeriods();
 		SMARTS.handleTimers();
 	}
 	else	
@@ -35,7 +33,7 @@ void far interrupt timerInterruptHandler(...)
 
 			// if the 'context switch' flag=true, save the current task variables
 			// and call the 'scheduler'
-	if (SMARTS.getContextSwitch( ) || SMARTS.getProgInt())   // save stack addr of interrupted task in current stack
+	if (SMARTS.getContextSwitch( ))   // save stack addr of interrupted task in current stack
 	{
 		SMARTS.setCurrentStack(StackSegAct,StackPtrAct);
 		SMARTS.restoreSchedStack( );	      // prepare activation of the task "scheduler"
@@ -78,9 +76,6 @@ void scheduler( )	// this also a parallel task
 
 		//  'dispatcher' to restore the next task stack addr and registers
 	SMARTS.getCurrentStack(StackSegAct,StackPtrAct);
-
-	//cout << "[NEXT-TASK] " << nextTask << " [" << StackSegAct << ":" << StackPtrAct << "]" ;
-
 	asm	mov	ax,StackSegAct;
 	asm	mov	ss,ax
 	asm	mov	sp,StackPtrAct

@@ -42,17 +42,17 @@ void Parallelism::externalFunctions(void interrupt ( *timerInterruptHandler)(...
 	this->scheduler = scheduler;
 	this->userTaskEnd = userTaskEnd;
 	this->algorithm = algorithm;
-	contextSched.declare(scheduler, userTaskEnd, 'S', 0, 0, 0); // prepare the stack of the scheduler task
+	contextSched.declare(scheduler, userTaskEnd, 'S'); // prepare the stack of the scheduler task
 	for (int i=MaxStack-1; i >= (MaxStack-14); i--)
 		schedCopy[i]=contextSched.stack[i];
 }
 
-int Parallelism::declareTask(void far *code, char name, int periodTime, int cycles, int priority)
+int Parallelism::declareTask(void far *code, char name)
 		// Insert a new task entry in SMARTS context array [ ]
 {
 	if (totalTasks < MaxTask-1) 
 	{
-		context[totalTasks++].declare(code, userTaskEnd, name, periodTime, cycles, priority);
+		context[totalTasks++].declare(code, userTaskEnd, name);
 		++activeTasks;
 		return true;
 	}
@@ -93,12 +93,6 @@ void Parallelism::runTheTasks()
 			cprintf("\n\n\rExit : finish");
 			break;
 		}
-		if (timeOutTasks > 0)
-		{
-			cprintf("\n\n\rExit : time error");
-			break;
-		}
-		
 	}
 
 		// restore the original BIOS 'interrupt vector' at the end before returning to regular DOS
@@ -156,27 +150,23 @@ int Parallelism::contextSwitchOn( )
 	if (endOfTimeSlice) //is current time slice finished ?
 	{	
 		endOfTimeSlice = false;
-		//contextSwitchFlag = true;
-		context[currentTask].isContextSwitch = true;
+		contextSwitchFlag = true;
 		callScheduler();	// return control to the scheduler
 		return 1;
 	}
-	//contextSwitchFlag = true;
-	context[currentTask].isContextSwitch = true;
+	contextSwitchFlag = true;
 	return 0;
 }
 
 void Parallelism::contextSwitchOff( )
 				// Disable context switch
 {	
-	//contextSwitchFlag = false;
-	context[currentTask].isContextSwitch = false;
+	contextSwitchFlag = false;
 }
 
 int Parallelism::getContextSwitch( )
 {	
-	//return contextSwitchFlag;
-	return context[currentTask].isContextSwitch;
+	return contextSwitchFlag;
 }
 
 void Parallelism::setProgInt( )
@@ -209,46 +199,10 @@ char Parallelism::getName(int taskNum)	// returns name found or ' ' if not
 	return (taskNum <= totalTasks)? context[taskNum].name : ' ';
 }
 
-int Parallelism::getPeriodTime(int taskNum)	// returns periodTime found or ' ' if not
-{
-	return (taskNum <= totalTasks) ? context[taskNum].periodTime : -1;
-}
-
-int Parallelism::getPeriodTimeLast(int taskNum)	// returns periodTime found or ' ' if not
-{
-	return (taskNum <= totalTasks) ? context[taskNum].periodTimeLast : -1;
-}
-
-int Parallelism::decPeriodTime(int taskNum)
-{
-	//cprintf("in decPeriodTime() ");
-	//cout << context[taskNum].periodTimeLast << endl;
-	if (taskNum <= totalTasks - 1)	// without scheduler.
-	{
-		context[taskNum].periodTimeLast--;
-
-		if (context[taskNum].periodTimeLast == 0 && context[taskNum].cycles > 0)
-		{		
-			context[taskNum].reDeclareTask();
-		}
-	}
-}
-
-int Parallelism::getCycles(int taskNum)	// returns Cycles found or ' ' if not
-{
-	return (taskNum <= totalTasks) ? context[taskNum].cycles : ' ';
-}
-
 char Parallelism::getCurrentName( )
 {	
 	return context[currentTask].name;
 }
-
-int Parallelism::getCurrentPriority()
-{
-	return context[currentTask].currentPriority;
-}
-
 
 taskStatus Parallelism::getStatus(int taskNum)  	
 	// returns status or undefined if not found
@@ -278,8 +232,7 @@ void Parallelism::resume(char taskName)
 void Parallelism::setCurrentNotActive()
 {	
 	context[currentTask].status = NOT_ACTIVE;
-	if(context[currentTask].cycles == 1)
-		--activeTasks;
+	--activeTasks;
 }
 void Parallelism::suspended()
 {	
@@ -340,21 +293,8 @@ void Parallelism::sleepDecr(int taskNum)
 void Parallelism::getCurrentStack(unsigned &StackSeg, unsigned &StackPtr)
 	// Load current task stack pointer
 {   
-	if (context[currentTask].is_restore != 0)	// if
-	{
-		for (int i = MaxStack - 1; i >= (MaxStack - 14); i--)
-			context[currentTask].stack[i] = context[currentTask].stack_copy[i];
-
-		StackSeg = context[currentTask].stackSeg_copy;
-		StackPtr = context[currentTask].stackPtr_copy;
-
-		context[currentTask].is_restore = 0;
-	}
-	else
-	{
-		StackSeg = context[currentTask].stackSeg;
-		StackPtr = context[currentTask].stackPtr;
-	}	
+	StackSeg = context[currentTask].stackSeg;
+	StackPtr = context[currentTask].stackPtr;
 }
 
 void Parallelism::setCurrentStack(unsigned StackSeg, unsigned StackPtr)
@@ -382,18 +322,8 @@ void Parallelism::handleTimers()
 			if (getStatus(i) == READY)
 				--sleepTasks;
 		}
-
 	}
 
-}
-
-
-void Parallelism::handleClockPeriods()
-{
-	for (int i = totalTasks - 1; i >= 0; --i)
-	{
-		decPeriodTime(i);
-	}
 }
 
 void Parallelism::taskEnd( )
@@ -420,38 +350,18 @@ Task::Task()
 	status = NOT_ACTIVE;
 	sleepCount = 0;
 	currentPriority=priority=0;
-	isContextSwitch = true;
 }
-
 //-----------------------------------------------------
-void Task::declare(void far *code, void far *userTaskEnd, char name, int periodTime, int cycles, int priority)
+void Task::declare(void far *code, void far *userTaskEnd, char name)
 {
 	stack[MaxStack-5]=FP_OFF(code);
 	stack[MaxStack-4]=FP_SEG(code);
 	stack[MaxStack-3]=_FLAGS;
 	stack[MaxStack-2]=FP_OFF(userTaskEnd);
 	stack[MaxStack-1]=FP_SEG(userTaskEnd);
-
-	for (int i = MaxStack - 1; i >= (MaxStack - 14); i--)	//Save the initial stack values for future recovery
-		stack_copy[i] = stack[i];
-
-	stackSeg_copy = stackSeg;
-	stackPtr_copy = stackPtr;
-
-	is_restore = 0;
-
-	this->periodTime = periodTime;	// the task should be complete every 'periodTime'
-	this->cycles = cycles;			// the task should be run 'cycles' times
 	this->name= name;
-
-	periodTimeLast = this->periodTime;
-
-	currentPriority = priority;
-	this->priority = priority;
-
 	status = READY;
 }
-
 //----------------------------------------------------
 void Task::incrPriority( )
 {
@@ -475,107 +385,4 @@ void Task::sleepDecr( )
 	}
 }
 
-void Task::reDeclareTask()
-{
-	periodTimeLast = periodTime;
-	cycles--;
 
-	if (status == NOT_ACTIVE)
-	{
-		if (cycles > 0)
-		{
-			//MUTEX.acquire();MUTEX.acquire();
-			status = READY;
-			is_restore = 1;
-			//MUTEX.release();
-		}
-		else
-			status = NOT_ACTIVE;
-	}
-	else
-	{
-		MUTEX.acquire();
-		cprintf("Time error %c ", name);
-		status = UNDEFINED;
-		SMARTS.timeOutTasks++;
-		MUTEX.release();
-	}
-}
-
-void Mutex::Mutex()
-{
-	_owner = -1;
-	_level = 0;
-	_s = 1;
-	_waitingList = new priorityQueue();
-	_numberSuspended = 0;
-}
-
-
-void Mutex::acquire()
-{
-	if (_s == 1 || _owner == SMARTS.getCurrentTask())
-		_s = 0;
-	else
-	{
-		_numberSuspended++;
-		_waitingList->enqueue(SMARTS.getCurrentTask(), SMARTS.getCurrentPriority());
-		SMARTS.suspended();		// suspending the current task.
-	}
-	_owner = SMARTS.getCurrentTask();
-	_level++;
-}
-
-void Mutex::release()
-{
-	if (_owner == SMARTS.getCurrentTask())
-		if (--_level)
-			return;
-		else {
-			_owner = -1;
-			if (_numberSuspended > 0) {
-				_numberSuspended--;
-				int task = _waitingList->peek();
-				SMARTS.resume(task);
-			}
-			else
-				_s = 1;
-		}
-}
-
-priorityQueue::priorityQueue()
-{
-	size = 0;
-}
-
-void priorityQueue::enqueue(int value, int priority)
-{
-	pr[size].value = value;
-	pr[size].priority = priority;
-
-	size++;
-}
-
-int priorityQueue::peek()
-{
-	int highestPriority = -999;
-	int ind = -1;
-
-	for (int i = 0; i < size; i++) 
-	{
-		if (highestPriority < pr[i].priority) 
-		{
-			highestPriority = pr[i].priority;
-			ind = i;
-		}
-	}
-
-	int ret = pr[ind].value;
-	
-	for (i = ind; i < size; i++) 
-		pr[i] = pr[i + 1];
-
-	size--;
-
-	return ret;
-}

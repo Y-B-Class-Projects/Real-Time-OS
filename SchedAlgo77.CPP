@@ -11,65 +11,15 @@
 int roundRobin( )
 // Round Robin short-term algorithm 
 {
+	int count;
 	int nextTask = (SMARTS.getCurrentTask()+1)%SMARTS.getTotalTasks( );
-
-	for (int count=0; SMARTS.getStatus(nextTask)!=READY && count<SMARTS.getTotalTasks( ); count++)
+	for (count=0;
+	     SMARTS.getStatus(nextTask)!=READY && count<SMARTS.getTotalTasks( );
+	     count++)
 	     nextTask=++nextTask%SMARTS.getTotalTasks( );
-
 	if (count == SMARTS.getTotalTasks( ))	// no found READY task to run
 		nextTask = SMARTS.getTotalTasks( );
-
-	return nextTask; 
-}
-
-int earliesDeadlineFirst()
-{
-	//return the task with the earliest deadline.
-
-	int nextTask = -1;
-	int min = 999;
-
-	for (int i = 0; i < SMARTS.getTotalTasks(); i++)
-	{
-		if (SMARTS.getStatus(i) == READY && SMARTS.getCycles(i) > 0)
-		{
-			int taskPeriodTimeLast = SMARTS.getPeriodTimeLast(i);
-
-			if (taskPeriodTimeLast < min)
-			{
-				min = taskPeriodTimeLast;
-				nextTask = i;
-			}
-		}
-	}
-
-	if (nextTask < 0)	// no found READY task to run
-		nextTask = SMARTS.getTotalTasks();	// call main next time.
-
 	return nextTask;
 }
 
-int rateMonotonicScheduling()
-{
-	int nextTask = -1;
-	int min = 999;
 
-	for (int i = 0; i < SMARTS.getTotalTasks(); i++)
-	{
-		if (SMARTS.getStatus(i) == READY && SMARTS.getCycles(i) > 0)
-		{
-			int taskPeriod = SMARTS.getPeriodTime(i);
-
-			if (taskPeriod < min)
-			{
-				min = taskPeriod;
-				nextTask = i;
-			}
-		}
-	}
-
-	if (nextTask < 0)	// no found READY task to run
-		nextTask = SMARTS.getTotalTasks();	// call main next time.
-
-	return nextTask;
-}

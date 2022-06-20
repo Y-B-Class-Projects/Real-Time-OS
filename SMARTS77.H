@@ -19,42 +19,9 @@
 #define userInt 0x60
 #define MaxTask 15
 #define MaxStack 512
-#define MaxWaiting 32
 enum taskStatus {READY, NOT_ACTIVE, SUSPENDED, SLEEP, UNDEFINED};
 
 /**********    Classes    **********/
-struct item {
-	int value;
-	int priority;
-};
-
-class priorityQueue
-{
-private:
-	item pr[MaxWaiting];
-	int size;
-
-public:
-	priorityQueue();
-	void enqueue(int value, int priority);
-	int peek();
-};
-
-class Mutex
-{
-private:
-	int _owner;
-	int _s;
-	int _numberSuspended;
-	priorityQueue *_waitingList;
-	int _level;
-
-public:
-	Mutex();
-	void acquire();
-	void release();
-};
-
 class Event
 {
 private:
@@ -82,29 +49,18 @@ class Task
 public:
 	char name;                      // task name
 	unsigned stack[MaxStack];       // the stack
-	unsigned stack_copy[MaxStack];  // copy of original stack (for restore).
 	unsigned stackSeg, stackPtr;    // the stack pointer
-	unsigned stackSeg_copy, stackPtr_copy;    // copy of the stack pointer
-	int is_restore;
 	int currentPriority;            // the priority of the task
 	int priority;                   // the original priority
 	taskStatus status;              // the status of the task
 	Event *expectedEvent;           // the event that this task is waiting for
 	int sleepCount;                 // the sleep remainder time
 	Task();
-	void declare(void far *code, void far *taskEnd, char name, int periodTime, int cycles, int priority);
+	void declare(void far *code, void far *taskEnd, char name);
 	void sleepDecr();
 	void incrPriority();
 	void setOriginalPriority();
-	int periodTime;					// the task should be complete every 'periodTime'.
-	int cycles;						// the task should be run 'cycles' times.
-	int periodTimeLast;				// time remain till the end of the cycle.
 
-	int isContextSwitch;
-	//void atomicSectionOn();
-	//void atomicSectionOff();
-
-	void reDeclareTask();
 };
 //                           Main class
 class Parallelism
@@ -128,7 +84,6 @@ private:
 public:
 	int sleepTasks;         // indicates how many task is sleeping, and it can't be deadlock
 	int activeTasks;        // indicates how many task is activate 
-	int timeOutTasks;
 	int traceInd;           // debugging index
 	long TScount;           // counts the clocks of the current task
 	unsigned timerClocksBegin;// time start of the current task
@@ -139,7 +94,7 @@ public:
 	void externalFunctions(void interrupt ( *timerInterruptHandler)(...),
 				   void far *scheduler, void far *userTaskEnd,
 				   int far (*algorithm)());
-	int declareTask(void far *code, char name, int periodTime, int cycles, int priority); // inserts a new task entry
+	int declareTask(void far *code, char name); // inserts a new task entry
 	void runTheTasks();// start running the tasks
 	void callScheduler();          // return to the control to the scheduler
 	void restoreSchedStack();       // restore the 'scheduler' stack
@@ -157,7 +112,6 @@ public:
 	void setEndOfTimeSlice();       // set the 'end of time slice' flag
 	char getName(int taskNum);
 	char getCurrentName();
-	int getCurrentPriority();
 	taskStatus getStatus(int taskNum);
 	taskStatus getCurrentStatus();
 	void resume(int taskNum);
@@ -176,12 +130,7 @@ public:
 	void setCurrentStack(unsigned StackSeg, unsigned StackPtr);
 	void getSchedStack(unsigned &StackSeg, unsigned &StackPtr);
 	void handleTimers();
-	void handleClockPeriods();	//function that reduce priodTime by 1 for each task. This function is called every clock cycle.
 	void taskEnd();
-	int getCycles(int taskNum);
-	int getPeriodTime(int taskNum);
-	int getPeriodTimeLast(int taskNum);
-	int decPeriodTime(int taskNum);		//function that reduce priodTime by 1 for spacific task.
 };
 //=======================
 /**********    Functions    **********/
@@ -193,9 +142,7 @@ void scheduler();
 void myTaskEnd();
 	// 'short term' scheduler algorithms 
 int roundRobin();
-int earliesDeadlineFirst();
-int rateMonotonicScheduling();
 	// main scheduler object
 extern Parallelism SMARTS;
-extern Mutex MUTEX;
+
 
