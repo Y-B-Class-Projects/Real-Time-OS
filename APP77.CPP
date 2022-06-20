@@ -92,9 +92,12 @@ void main( )
 {
 	clrscr();
 	SMARTS.externalFunctions(timerInterruptHandler, scheduler, myTaskEnd, roundRobin);
+
 	//SMARTS.declareTask(a,'A', 51, 3, 30);
 	//SMARTS.declareTask(b,'B', 50, 2, 20);
 	//SMARTS.declareTask(c,'C', 49, 1, 10);
+
+	//Atomic section test
 	SMARTS.declareTask(a3, 'c', 102, 2, 3);
 	SMARTS.declareTask(a1, 'a', 100, 2, 1);
 	SMARTS.declareTask(a2, 'b', 101, 2, 2);
