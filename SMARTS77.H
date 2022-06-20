@@ -100,6 +100,10 @@ public:
 	int cycles;						// the task should be run 'cycles' times.
 	int periodTimeLast;				// time remain till the end of the cycle.
 
+	int isContextSwitch;
+	//void atomicSectionOn();
+	//void atomicSectionOff();
+
 	void reDeclareTask();
 };
 //                           Main class

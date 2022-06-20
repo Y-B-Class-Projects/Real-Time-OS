@@ -62,21 +62,28 @@ void c( )
 void a1()
 {
 	MUTEX.acquire();
+	//SMARTS.contextSwitchOff();
+	cout << "\n A";
 	for (long i = 0; i < 6000000; i++);
 	cout << "\n *************   A1    *********************";
 	MUTEX.release();
+	//SMARTS.contextSwitchOn();
 }
 void a2()
 {
 	MUTEX.acquire();
+	//SMARTS.contextSwitchOff();;
 	cout << "\n *************   A2    *********************";
 	MUTEX.release();
+	//SMARTS.contextSwitchOn();
 }
 void a3()
 {
 	MUTEX.acquire();
+	//SMARTS.contextSwitchOff();
 	cout << "\n *************   A3    *********************";
 	MUTEX.release();
+	//SMARTS.contextSwitchOn();
 }
 
 
@@ -85,12 +92,12 @@ void main( )
 {
 	clrscr();
 	SMARTS.externalFunctions(timerInterruptHandler, scheduler, myTaskEnd, roundRobin);
-	SMARTS.declareTask(a,'A', 51, 3, 30);
-	SMARTS.declareTask(b,'B', 50, 2, 20);
-	SMARTS.declareTask(c,'C', 49, 1, 10);
-	//SMARTS.declareTask(a3, 'c', 102, 1, 3);
-	//SMARTS.declareTask(a1, 'a', 100, 1, 1);
-	//SMARTS.declareTask(a2, 'b', 101, 1, 2);
+	//SMARTS.declareTask(a,'A', 51, 3, 30);
+	//SMARTS.declareTask(b,'B', 50, 2, 20);
+	//SMARTS.declareTask(c,'C', 49, 1, 10);
+	SMARTS.declareTask(a3, 'c', 102, 2, 3);
+	SMARTS.declareTask(a1, 'a', 100, 2, 1);
+	SMARTS.declareTask(a2, 'b', 101, 2, 2);
 
 
 

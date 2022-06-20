@@ -156,23 +156,27 @@ int Parallelism::contextSwitchOn( )
 	if (endOfTimeSlice) //is current time slice finished ?
 	{	
 		endOfTimeSlice = false;
-		contextSwitchFlag = true;
+		//contextSwitchFlag = true;
+		context[currentTask].isContextSwitch = true;
 		callScheduler();	// return control to the scheduler
 		return 1;
 	}
-	contextSwitchFlag = true;
+	//contextSwitchFlag = true;
+	context[currentTask].isContextSwitch = true;
 	return 0;
 }
 
 void Parallelism::contextSwitchOff( )
 				// Disable context switch
 {	
-	contextSwitchFlag = false;
+	//contextSwitchFlag = false;
+	context[currentTask].isContextSwitch = false;
 }
 
 int Parallelism::getContextSwitch( )
 {	
-	return contextSwitchFlag;
+	//return contextSwitchFlag;
+	return context[currentTask].isContextSwitch;
 }
 
 void Parallelism::setProgInt( )
@@ -416,7 +420,9 @@ Task::Task()
 	status = NOT_ACTIVE;
 	sleepCount = 0;
 	currentPriority=priority=0;
+	isContextSwitch = true;
 }
+
 //-----------------------------------------------------
 void Task::declare(void far *code, void far *userTaskEnd, char name, int periodTime, int cycles, int priority)
 {
@@ -445,6 +451,7 @@ void Task::declare(void far *code, void far *userTaskEnd, char name, int periodT
 
 	status = READY;
 }
+
 //----------------------------------------------------
 void Task::incrPriority( )
 {
@@ -529,7 +536,6 @@ void Mutex::release()
 			if (_numberSuspended > 0) {
 				_numberSuspended--;
 				int task = _waitingList->peek();
-				cprintf("(%d)", task);
 				SMARTS.resume(task);
 			}
 			else
@@ -564,7 +570,6 @@ int priorityQueue::peek()
 		}
 	}
 
-	cprintf("(i:%d, v:%d, s:%d)", ind, pr[ind].value, size-1);
 	int ret = pr[ind].value;
 	
 	for (i = ind; i < size; i++) 
