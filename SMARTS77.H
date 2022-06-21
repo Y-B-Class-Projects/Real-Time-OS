@@ -92,7 +92,7 @@ public:
 	Event *expectedEvent;           // the event that this task is waiting for
 	int sleepCount;                 // the sleep remainder time
 	Task();
-	void declare(void far *code, void far *taskEnd, char name, int periodTime, int cycles, int priority);
+	void declare(void far *code, void far *taskEnd, char name, int periodTime = 0, int cycles = 0, int priority = 0);
 	void sleepDecr();
 	void incrPriority();
 	void setOriginalPriority();
@@ -139,7 +139,7 @@ public:
 	void externalFunctions(void interrupt ( *timerInterruptHandler)(...),
 				   void far *scheduler, void far *userTaskEnd,
 				   int far (*algorithm)());
-	int declareTask(void far *code, char name, int periodTime, int cycles, int priority); // inserts a new task entry
+	int declareTask(void far *code, char name, int periodTime = 0, int cycles = 0, int priority = 0); // inserts a new task entry
 	void runTheTasks();// start running the tasks
 	void callScheduler();          // return to the control to the scheduler
 	void restoreSchedStack();       // restore the 'scheduler' stack

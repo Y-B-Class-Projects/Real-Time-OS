@@ -62,47 +62,87 @@ void c( )
 void a1()
 {
 	MUTEX.acquire();
-	//SMARTS.contextSwitchOff();
 	cout << "\n A";
-	for (long i = 0; i < 6000000; i++);
-	cout << "\n *************   A1    *********************";
+	SMARTS.sleep(60);
+	cout << "\n *************   A    *********************";
 	MUTEX.release();
-	//SMARTS.contextSwitchOn();
 }
 void a2()
 {
 	MUTEX.acquire();
-	//SMARTS.contextSwitchOff();;
-	cout << "\n *************   A2    *********************";
+	cout << "\n *************   B    *********************";
 	MUTEX.release();
-	//SMARTS.contextSwitchOn();
 }
 void a3()
 {
 	MUTEX.acquire();
-	//SMARTS.contextSwitchOff();
-	cout << "\n *************   A3    *********************";
+	cout << "\n *************   C    *********************";
 	MUTEX.release();
-	//SMARTS.contextSwitchOn();
 }
 
+void b1()
+{
+	SMARTS.contextSwitchOff();
+	cout << "\n A";
+	SMARTS.sleep(60);
+	cout << "\n *************   A    *********************";
+	SMARTS.contextSwitchOn();
+}
+void b2()
+{
+	SMARTS.contextSwitchOff();
+	cout << "\n *************   B    *********************";
+	SMARTS.contextSwitchOn();
+}
+void b3()
+{
+	SMARTS.contextSwitchOff();
+	cout << "\n *************   C    *********************";
+	SMARTS.contextSwitchOn();
+}
 
 
 void main( )
 {
 	clrscr();
-	SMARTS.externalFunctions(timerInterruptHandler, scheduler, myTaskEnd, roundRobin);
+	int option = 0;
 
-	//SMARTS.declareTask(a,'A', 51, 3, 30);
-	//SMARTS.declareTask(b,'B', 50, 2, 20);
-	//SMARTS.declareTask(c,'C', 49, 1, 10);
-
-	//Atomic section test
-	SMARTS.declareTask(a3, 'c', 102, 2, 3);
-	SMARTS.declareTask(a1, 'a', 100, 2, 1);
-	SMARTS.declareTask(a2, 'b', 101, 2, 2);
-
-
+	switch (option)
+	{
+	case 0:	// regular roundRobin.
+		SMARTS.externalFunctions(timerInterruptHandler, scheduler, myTaskEnd, roundRobin);
+		SMARTS.declareTask(c, 'C');
+		SMARTS.declareTask(a, 'A');
+		SMARTS.declareTask(b, 'B');
+		break;
+	case 1:	// earliesDeadlineFirst with time out.
+		SMARTS.externalFunctions(timerInterruptHandler, scheduler, myTaskEnd, earliesDeadlineFirst);
+		SMARTS.declareTask(a, 'A', 50, 1);
+		SMARTS.declareTask(b, 'B', 51, 1);
+		SMARTS.declareTask(c, 'C', 1, 1);
+		break;
+	case 2:	// earliesDeadlineFirst
+		SMARTS.externalFunctions(timerInterruptHandler, scheduler, myTaskEnd, earliesDeadlineFirst);
+		SMARTS.declareTask(a, 'A', 51, 3);
+		SMARTS.declareTask(b, 'B', 50, 2);
+		SMARTS.declareTask(c, 'C', 49, 1);
+		break;
+	case 3:	// atomic section (MUTEX) with rateMonotonicScheduling.
+		SMARTS.externalFunctions(timerInterruptHandler, scheduler, myTaskEnd, rateMonotonicScheduling);
+		SMARTS.declareTask(a1, 'a', 70, 1, 1);
+		SMARTS.declareTask(a2, 'b', 71, 1, 2);
+		SMARTS.declareTask(a3, 'c', 72, 1, 3);
+		break;
+	case 4:	// atomic section (contextSwitch) with rateMonotonicScheduling.
+		SMARTS.externalFunctions(timerInterruptHandler, scheduler, myTaskEnd, rateMonotonicScheduling);
+		SMARTS.declareTask(b1, 'a', 50, 1, 1);
+		SMARTS.declareTask(b2, 'b', 51, 1, 2);
+		SMARTS.declareTask(b3, 'c', 52, 1, 3);
+		break;
+	default:
+		break;
+	}
+ 
 
 	SMARTS.runTheTasks();
 

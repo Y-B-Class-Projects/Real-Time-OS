@@ -42,7 +42,7 @@ void Parallelism::externalFunctions(void interrupt ( *timerInterruptHandler)(...
 	this->scheduler = scheduler;
 	this->userTaskEnd = userTaskEnd;
 	this->algorithm = algorithm;
-	contextSched.declare(scheduler, userTaskEnd, 'S', 0, 0, 0); // prepare the stack of the scheduler task
+	contextSched.declare(scheduler, userTaskEnd, 'S'); // prepare the stack of the scheduler task
 	for (int i=MaxStack-1; i >= (MaxStack-14); i--)
 		schedCopy[i]=contextSched.stack[i];
 }
@@ -278,7 +278,7 @@ void Parallelism::resume(char taskName)
 void Parallelism::setCurrentNotActive()
 {	
 	context[currentTask].status = NOT_ACTIVE;
-	if(context[currentTask].cycles == 1)
+	if(context[currentTask].cycles <= 1)
 		--activeTasks;
 }
 void Parallelism::suspended()
